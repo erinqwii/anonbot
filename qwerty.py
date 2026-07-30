@@ -1,6 +1,7 @@
 import os
 import time
 import asyncio
+import requests
 from flask import Flask
 from threading import Thread
 from telegram import Update
@@ -16,15 +17,30 @@ user_last_msg = {}
 # Ограничение: 1 сообщение в 10 секунд
 SPAM_LIMIT = 10  
 
-# ========== FLASK (чтобы Render не уснул) ==========
-app = Flask(name)
+# ========== FLASK (для пинга, чтобы Render не уснул) ==========
+app = Flask(name)  # ← ИСПРАВЛЕНО! (было name)
 
 @app.route('/')
 def health():
     return "Бот работает!", 200
 
+@app.route('/ping')
+def ping():
+    return "Pong!", 200
+
 def run_flask():
     app.run(host='0.0.0.0', port=8080)
+
+# ========== АВТО-ПИНГ (будит бота каждые 10 минут) ==========
+def auto_ping():
+    """Каждые 10 минут пингует свой Flask-сервер, чтобы Render не уснул"""
+    while True:
+        time.sleep(600)  # 600 секунд = 10 минут
+        try:
+            requests.get('http://localhost:8080/ping')
+            print("✅ Авто-пинг выполнен")
+        except:
+            print("⚠️ Ошибка при авто-пинге")
 
 # ========== ФУНКЦИИ БОТА ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -95,7 +111,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("✅ Голосовое опубликовано в канале!")
         
         # ДОКУМЕНТЫ (файлы)
-        elif update.message.document:
+            elif update.message.document:
             doc = update.message.document
             caption = update.message.caption or "📄 Анонимный документ"
             await context.bot.send_document(
@@ -115,7 +131,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ========== ЗАПУСК БОТА ==========
 def run_bot():
     application = Application.builder().token(TOKEN).build()
-    
     # Регистрируем команды
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(
@@ -127,10 +142,16 @@ def run_bot():
     application.run_polling()
 
 # ========== ТОЧКА ВХОДА ==========
-if name == "main":
+if name == "main":  # ← ИСПРАВЛЕНО! (было name)
     # Запускаем Flask в отдельном потоке
     flask_thread = Thread(target=run_flask)
+    flask_thread.daemon = True
     flask_thread.start()
+    
+    # Запускаем авто-пинг в отдельном потоке
+    ping_thread = Thread(target=auto_ping)
+    ping_thread.daemon = True
+    ping_thread.start()
     
     # Запускаем бота
     run_bot()
