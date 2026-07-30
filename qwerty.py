@@ -116,16 +116,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ========== ЗАПУСК БОТА ==========
 def run_bot():
-    application = Application.builder().token(TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(
-        filters.TEXT | filters.PHOTO | filters.VIDEO | filters.VOICE | filters.Document.ALL, 
-        handle_message
-    ))
-    
-    print("Бот запущен и готов к работе!")
-    application.run_polling()
-
+    while True:
+        try:
+            application = Application.builder().token(TOKEN).build()
+            application.add_handler(CommandHandler("start", start))
+            application.add_handler(MessageHandler(
+                filters.TEXT | filters.PHOTO | filters.VIDEO | filters.VOICE | filters.Document.ALL, 
+                handle_message
+            ))
+            print("🤖 Бот запущен и готов к работе!")
+            application.run_polling()
+        except Exception as e:
+            print(f"⚠️ Ошибка: {e}. Перезапуск через 5 секунд...")
+            time.sleep(5)
+            
 # ========== ТОЧКА ВХОДА ==========
 if __name__ == "__main__":
     flask_thread = Thread(target=run_flask)
