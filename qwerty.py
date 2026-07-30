@@ -42,9 +42,8 @@ def auto_ping():
 # ========== ФУНКЦИИ БОТА ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Привет! Я анонимный бот .\n"
+        "Привет! Я анон бот 𝑨𝑵𝑮𝑬𝑳'𝑺𝑲𝒀.\n"
         "Просто напиши мне любое сообщение, и я опубликую его в канале.\n"
-        "!ТВОЕ ИМЯ И НИКНЕЙМ НЕ БУДЕТ ОТОБРАЖАТЬСЯ!"
     )
 
 def is_spam(user_id: int) -> bool:
@@ -66,7 +65,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if update.message.text:
             await context.bot.send_message(
                 chat_id=CHANNEL_ID,
-                text=f"📩 Анонимно:\n\n{update.message.text}"
+                text=f"анон: {update.message.text}"
             )
             await update.message.reply_text("✅ Текст опубликован в канале!")
         
@@ -76,7 +75,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_photo(
                 chat_id=CHANNEL_ID,
                 photo=photo.file_id,
-                caption=f"📩 Анонимно:\n\n{caption}"
+                caption=f"анон: {caption}"
             )
             await update.message.reply_text("✅ Фото опубликовано в канале!")
         
@@ -86,7 +85,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_video(
                 chat_id=CHANNEL_ID,
                 video=video.file_id,
-                caption=f"📩 Анонимно:\n\n{caption}"
+                caption=f"анон: {caption}"
             )
             await update.message.reply_text("✅ Видео опубликовано в канале!")
         
@@ -95,7 +94,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_voice(
                 chat_id=CHANNEL_ID,
                 voice=voice.file_id,
-                caption="🎙️ Анонимное голосовое сообщение"
+                caption="анон гс"
             )
             await update.message.reply_text("✅ Голосовое опубликовано в канале!")
         
@@ -105,7 +104,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_document(
                 chat_id=CHANNEL_ID,
                 document=doc.file_id,
-                caption=f"📩 Анонимно:\n\n{caption}"
+                caption=f"анон: {caption}"
             )
             await update.message.reply_text("✅ Документ опубликован в канале!")
         
