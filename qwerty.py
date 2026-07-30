@@ -8,17 +8,15 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 # ========== НАСТРОЙКИ ==========
-TOKEN = "8534953023:AAESqhJoap-KDtLu1e_FL2m3qTcvaV74COo"  # Вставь сюда
-CHANNEL_ID = "@ANG3KYAN0N"          # Например: @news_channel
+TOKEN = "8534953023:AAESqhJoap-KDtLu1e_FL2m3qTcvaV74COo"
+CHANNEL_ID = "@ANG3KYAN0N"
 
-# Словарь для защиты от спама {user_id: время_последнего_сообщения}
+# Словарь для защиты от спама
 user_last_msg = {}
+SPAM_LIMIT = 10
 
-# Ограничение: 1 сообщение в 10 секунд
-SPAM_LIMIT = 10  
-
-# ========== FLASK (для пинга, чтобы Render не уснул) ==========
-app = Flask(name)  # ← ИСПРАВЛЕНО! (было name)
+# ========== FLASK ==========
+app = Flask(__name__)
 
 @app.route('/')
 def health():
@@ -31,11 +29,10 @@ def ping():
 def run_flask():
     app.run(host='0.0.0.0', port=8080)
 
-# ========== АВТО-ПИНГ (будит бота каждые 10 минут) ==========
+# ========== АВТО-ПИНГ ==========
 def auto_ping():
-    """Каждые 10 минут пингует свой Flask-сервер, чтобы Render не уснул"""
     while True:
-        time.sleep(600)  # 600 секунд = 10 минут
+        time.sleep(600)
         try:
             requests.get('http://localhost:8080/ping')
             print("✅ Авто-пинг выполнен")
@@ -51,7 +48,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 def is_spam(user_id: int) -> bool:
-    """Проверяет, не спамит ли пользователь"""
     current_time = time.time()
     if user_id in user_last_msg:
         if current_time - user_last_msg[user_id] < SPAM_LIMIT:
@@ -62,14 +58,11 @@ def is_spam(user_id: int) -> bool:
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
-    # === ЗАЩИТА ОТ СПАМА ===
     if is_spam(user_id):
         await update.message.reply_text(f"Подожди {SPAM_LIMIT} секунд перед новым сообщением!")
         return
     
-    # === ОБРАБОТКА РАЗНЫХ ТИПОВ СООБЩЕНИЙ ===
     try:
-        # ТЕКСТ
         if update.message.text:
             await context.bot.send_message(
                 chat_id=CHANNEL_ID,
@@ -77,9 +70,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await update.message.reply_text("✅ Текст опубликован в канале!")
         
-        # ФОТО
         elif update.message.photo:
-            # Берём самое качественное фото (последнее в списке)
             photo = update.message.photo[-1]
             caption = update.message.caption or "📸 Анонимное фото"
             await context.bot.send_photo(
@@ -89,7 +80,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await update.message.reply_text("✅ Фото опубликовано в канале!")
         
-        # ВИДЕО
         elif update.message.video:
             video = update.message.video
             caption = update.message.caption or "🎬 Анонимное видео"
@@ -100,7 +90,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await update.message.reply_text("✅ Видео опубликовано в канале!")
         
-        # ГОЛОСОВЫЕ СООБЩЕНИЯ
         elif update.message.voice:
             voice = update.message.voice
             await context.bot.send_voice(
@@ -110,8 +99,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await update.message.reply_text("✅ Голосовое опубликовано в канале!")
         
-        # ДОКУМЕНТЫ (файлы)
-            elif update.message.document:
+        elif update.message.document:
             doc = update.message.document
             caption = update.message.caption or "📄 Анонимный документ"
             await context.bot.send_document(
@@ -121,7 +109,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await update.message.reply_text("✅ Документ опубликован в канале!")
         
-        # ВСЁ ОСТАЛЬНОЕ
         else:
             await update.message.reply_text("Этот тип сообщений пока не поддерживается.")
             
@@ -131,7 +118,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ========== ЗАПУСК БОТА ==========
 def run_bot():
     application = Application.builder().token(TOKEN).build()
-    # Регистрируем команды
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(
         filters.TEXT | filters.PHOTO | filters.VIDEO | filters.VOICE | filters.Document.ALL, 
@@ -142,16 +128,13 @@ def run_bot():
     application.run_polling()
 
 # ========== ТОЧКА ВХОДА ==========
-if name == "main":  # ← ИСПРАВЛЕНО! (было name)
-    # Запускаем Flask в отдельном потоке
+if __name__ == "__main__":
     flask_thread = Thread(target=run_flask)
     flask_thread.daemon = True
     flask_thread.start()
     
-    # Запускаем авто-пинг в отдельном потоке
     ping_thread = Thread(target=auto_ping)
     ping_thread.daemon = True
     ping_thread.start()
     
-    # Запускаем бота
     run_bot()
